@@ -13,7 +13,6 @@ import shutil
 
 class FixtureBuilder:
 
-    @mock.patch('time.time', mock.MagicMock(return_value=1577836800))
 
     def __init__(self, name):
         self.dir = os.path.join(os.path.dirname(__file__), 'fixtures', name)
@@ -40,6 +39,9 @@ class FixtureBuilder:
         self.add_key('targets')
         self.add_key('snapshot')
         self.add_key('timestamp')
+        # @todo Do we really need to write when we add initial roles?
+        #   we are doing this now just to match the previous fixtures from php-tuf library
+        self.repository.writeall(consistent_snapshot=True)
 
         self.repository.status()
 
@@ -103,7 +105,11 @@ class FixtureBuilder:
 
     def add_target(self, filename, signing_role='targets'):
         """Adds an existing target file and signs it."""
-        self._role(signing_role).add_targets([filename])
+        # @todo Just effin' use add_target, or add_targets, regardless of role.
+        if signing_role is 'targets':
+            self._role(signing_role).add_targets([filename])
+        else:
+            self._role(signing_role).add_target(filename)
         self.repository.mark_dirty(['snapshot', 'targets', 'timestamp', signing_role])
 
         return self
